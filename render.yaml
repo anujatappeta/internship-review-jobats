@@ -8,6 +8,7 @@ services:
   - type: web
     name: jobsphere
     runtime: python
+    plan: free
     rootDir: .
     buildCommand: "pip install -r requirements.txt && python manage.py migrate && python manage.py collectstatic --no-input && python seed_jobs.py"
     startCommand: "gunicorn myproject.wsgi:application"

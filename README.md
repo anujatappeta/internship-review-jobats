@@ -38,4 +38,4 @@ SQLite is retained for local development only. Vercel's function filesystem is n
 
 ## Deploy to Render
 
-The included `render.yaml` provisions PostgreSQL, runs migrations and imports API jobs during the build, and starts the Django app with Gunicorn. The generated `SECRET_KEY` and database URL are managed by Render. Create a recruiter account through Django's management command in an environment connected to the same database.
+The included `render.yaml` provisions free PostgreSQL and a free web service, runs migrations and imports API jobs during the build, and starts the Django app with Gunicorn. Free web services sleep when idle, and free PostgreSQL databases expire after 30 days; use a paid database plan if you need persistent application data. The generated `SECRET_KEY` and database URL are managed by Render. Create a recruiter account through Django's management command in an environment connected to the same database.
