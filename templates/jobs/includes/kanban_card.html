@@ -1,0 +1,80 @@
+<div class="kanban-card" data-application-id="{{ app.id }}" data-status="{{ stage }}">
+    <h4 class="kanban-candidate-name">{{ app.candidate.full_name }}</h4>
+    <p class="kanban-candidate-job">{{ app.job.title }}</p>
+    
+    <!-- Candidate Contact Info -->
+    <div class="kanban-candidate-info">
+        <a href="mailto:{{ app.candidate.email }}" class="text-decoration-none text-secondary-custom d-inline-flex align-items-center gap-1">
+            <i class="fa-regular fa-envelope text-muted"></i>
+            <span>{{ app.candidate.email }}</span>
+        </a>
+    </div>
+    <div class="kanban-candidate-info">
+        <span class="text-secondary-custom d-inline-flex align-items-center gap-1">
+            <i class="fa-solid fa-phone text-muted"></i>
+            <span>{{ app.candidate.phone }}</span>
+        </span>
+    </div>
+    {% if app.candidate.portfolio_url %}
+    <div class="kanban-candidate-info">
+        <a href="{{ app.candidate.portfolio_url }}" target="_blank" class="text-decoration-none text-secondary-custom d-inline-flex align-items-center gap-1">
+            <i class="fa-solid fa-link text-muted"></i>
+            <span>Portfolio Website</span>
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Skills Badges -->
+    <div class="kanban-candidate-skills">
+        {% for skill in app.candidate.skills_list %}
+            <span class="skill-tag" style="font-size: 0.65rem; padding: 0.1rem 0.4rem;">{{ skill }}</span>
+        {% endfor %}
+    </div>
+
+    <!-- Collapsible Cover Letter -->
+    {% if app.cover_letter %}
+    <div class="mt-2">
+        <a class="text-decoration-none small text-gradient-primary font-weight-bold d-inline-flex align-items-center gap-1" 
+           data-bs-toggle="collapse" 
+           href="#cover-letter-{{ app.id }}" 
+           role="button" 
+           aria-expanded="false" 
+           aria-controls="cover-letter-{{ app.id }}">
+            <i class="fa-solid fa-file-lines"></i> View Cover Letter
+        </a>
+        <div class="collapse mt-2" id="cover-letter-{{ app.id }}">
+            <div class="card card-body bg-surface-elevated p-2 border-0 small text-secondary-custom" style="font-size: 0.78rem; line-height: 1.4;">
+                {{ app.cover_letter|linebreaksbr }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="small text-muted mt-2 d-block" style="font-size: 0.72rem;">
+        Applied {{ app.applied_at|date:"d M Y" }}
+    </div>
+
+    <!-- Transition Action Buttons -->
+    <div class="kanban-actions">
+        <!-- Move Left -->
+        <button class="btn-kanban-action btn-move-left" 
+                title="Move back" 
+                style="display: {% if stage == 'APPLIED' %}none{% else %}inline-flex{% endif %};">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        
+        <!-- Move Right -->
+        <button class="btn-kanban-action btn-move-right" 
+                title="Move forward" 
+                style="display: {% if stage == 'SHORTLIST' or stage == 'REJECTED' %}none{% else %}inline-flex{% endif %};">
+            <i class="fa-solid fa-arrow-right"></i>
+        </button>
+        
+        <!-- Reject -->
+        <button class="btn-kanban-action btn-reject text-danger" 
+                title="Reject candidate" 
+                style="display: {% if stage == 'REJECTED' %}none{% else %}inline-flex{% endif %};">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+</div>

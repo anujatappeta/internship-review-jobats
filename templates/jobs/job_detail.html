@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ job.title }} at {{ job.company.name }} | JobSphere{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Back to Listings link -->
+    <a href="{% url 'job_list' %}" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i> Back to Opportunities
+    </a>
+
+    <div class="row g-4">
+        <!-- Main Job Details Column -->
+        <div class="col-lg-8">
+            <div class="detail-card">
+                <div class="detail-header">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="badge-custom badge-type">
+                            <i class="fa-solid fa-clock"></i> {{ job.get_job_type_display }}
+                        </span>
+                        {% if job.job_type == 'REMOTE' %}
+                            <span class="badge-custom badge-location-remote">
+                                <i class="fa-solid fa-house-laptop"></i> Remote
+                            </span>
+                        {% else %}
+                            <span class="badge-custom badge-location-office">
+                                <i class="fa-solid fa-location-dot"></i> {{ job.company.location }}
+                            </span>
+                        {% endif %}
+                        <span class="badge-custom badge-salary">
+                            <i class="fa-solid fa-money-bill-wave"></i> {{ job.salary_range }}
+                        </span>
+                    </div>
+
+                    <h1 class="h2 font-weight-bold mb-2">{{ job.title }}</h1>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="company-name fs-5">{{ job.company.name }}</span>
+                    </div>
+                    
+                    <span class="posted-date d-block">Posted on {{ job.posted_date|date:"F d, Y" }}</span>
+                </div>
+
+                <div class="detail-body">
+                    <h3 class="h5 font-weight-bold text-gradient-primary mb-3">Job Description</h3>
+                    <div class="mb-4 text-secondary-custom">
+                        {{ job.description|linebreaks }}
+                    </div>
+
+                    <h3 class="h5 font-weight-bold text-gradient-primary mb-3">Required Technical Skills</h3>
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        {% for skill in job.skills_list %}
+                            <span class="skill-tag px-3 py-2 fs-6">{{ skill }}</span>
+                        {% empty %}
+                            <span class="skill-tag">General Tech</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="border-top border-color pt-4 mt-4">
+                        {% if job.external_url %}
+                        <a href="{{ job.external_url }}" class="btn btn-secondary-custom py-3 px-4 me-2" target="_blank" rel="noopener noreferrer">
+                            View original listing
+                        </a>
+                        {% endif %}
+                        <button type="button" 
+                                class="btn btn-primary-custom py-3 px-5 btn-apply-trigger" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#applyModal"
+                                data-job-id="{{ job.id }}"
+                                data-job-title="{{ job.title }}"
+                                data-company-name="{{ job.company.name }}"
+                                id="btn-apply-detail-{{ job.id }}">
+                            <i class="fa-solid fa-paper-plane me-2"></i> Apply for this position
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Info Column -->
+        <div class="col-lg-4">
+            <div class="d-flex flex-column gap-4">
+                <!-- Company Details Card -->
+                <div class="detail-sidebar-card">
+                    <h3 class="h6 font-weight-bold text-uppercase tracking-wider text-muted mb-3">Company Information</h3>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="company-logo-container" style="width: 56px; height: 56px;">
+                            {% if job.company.logo_url %}
+                                <img src="{{ job.company.logo_url }}" alt="{{ job.company.name }} logo" class="company-logo" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            {% endif %}
+                            <div class="company-logo-fallback" {% if job.company.logo_url %}style="display: none;"{% endif %}>
+                                {{ job.company.name|slice:":1"|upper }}
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="h6 mb-0 font-weight-bold">{{ job.company.name }}</h4>
+                            <span class="text-muted small"><i class="fa-solid fa-location-dot me-1"></i> {{ job.company.location }}</span>
+                        </div>
+                    </div>
+                    
+                    <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
+                        {% if job.company.website %}
+                        <li class="d-flex align-items-center gap-2 text-secondary-custom">
+                            <i class="fa-solid fa-globe text-muted" style="width: 16px;"></i>
+                            <a href="{{ job.company.website }}" target="_blank" class="text-decoration-none text-break">Visit Corporate Website</a>
+                        </li>
+                        {% endif %}
+                        <li class="d-flex align-items-center gap-2 text-secondary-custom">
+                            <i class="fa-solid fa-briefcase text-muted" style="width: 16px;"></i>
+                            <span>{{ job.company.jobs.count }} active posting{{ job.company.jobs.count|pluralize }}</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Similar Jobs Card -->
+                {% if similar_jobs %}
+                <div class="detail-sidebar-card">
+                    <h3 class="h6 font-weight-bold text-uppercase tracking-wider text-muted mb-3">Other Jobs at {{ job.company.name }}</h3>
+                    <div class="d-flex flex-column gap-3">
+                        {% for s_job in similar_jobs %}
+                        <div class="border-bottom border-color pb-2 last-border-none">
+                            <a href="{% url 'job_detail' s_job.id %}" class="text-decoration-none">
+                                <h4 class="h6 mb-1 font-weight-bold text-primary-hover">{{ s_job.title }}</h4>
+                            </a>
+                            <div class="d-flex gap-2 text-muted small">
+                                <span><i class="fa-solid fa-clock"></i> {{ s_job.get_job_type_display }}</span>
+                                <span>•</span>
+                                <span>{{ s_job.salary_range }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Application Modal (reused from list page) -->
+<div class="modal fade" id="applyModal" tabindex="-1" aria-labelledby="applyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-glass">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h3 class="modal-title h5 font-weight-bold" id="applyModalLabel">
+                        Apply for <span id="modal-job-title" class="text-gradient-primary">{{ job.title }}</span>
+                    </h3>
+                    <p class="text-muted small mb-0"><i class="fa-solid fa-building me-1"></i> <span id="modal-company-name">{{ job.company.name }}</span></p>
+                </div>
+                <button type="button" class="btn-close" data-bs-shadow="none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form id="job-application-form" method="post" action="{% url 'job_apply' job.id %}" data-job-id="{{ job.id }}">
+                {% csrf_token %}
+                <div class="modal-body py-4">
+                    <!-- Global Error Banner -->
+                    <div id="modal-error-banner" class="alert alert-danger" style="display: none;" role="alert"></div>
+                    
+                    <!-- Candidate Full Name -->
+                    <div class="mb-3">
+                        <label for="id_full_name" class="form-label">Full Name *</label>
+                        {{ candidate_form.full_name }}
+                        <div class="invalid-feedback">Please enter your full name.</div>
+                    </div>
+                    
+                    <!-- Candidate Email -->
+                    <div class="mb-3">
+                        <label for="id_email" class="form-label">Email Address *</label>
+                        {{ candidate_form.email }}
+                        <div class="invalid-feedback">Please enter a valid email address.</div>
+                    </div>
+                    
+                    <!-- Candidate Phone -->
+                    <div class="mb-3">
+                        <label for="id_phone" class="form-label">Phone Number *</label>
+                        {{ candidate_form.phone }}
+                        <small class="form-text text-muted">Format: 7 to 15 digits (e.g. +1234567890).</small>
+                        <div class="invalid-feedback">Please enter a valid phone number.</div>
+                    </div>
+                    
+                    <!-- Candidate Portfolio URL -->
+                    <div class="mb-3">
+                        <label for="id_portfolio_url" class="form-label">Portfolio / Github URL</label>
+                        {{ candidate_form.portfolio_url }}
+                        <div class="invalid-feedback">Please enter a valid URL.</div>
+                    </div>
+                    
+                    <!-- Candidate Skills tags -->
+                    <div class="mb-3">
+                        <label for="id_skills" class="form-label">Skills (comma-separated) *</label>
+                        {{ candidate_form.skills }}
+                        <small class="form-text text-muted">Comma separated, up to 200 characters.</small>
+                        <div class="invalid-feedback">Please enter at least one skill.</div>
+                    </div>
+                    
+                    <!-- Application Cover Letter -->
+                    <div class="mb-0">
+                        <label for="id_cover_letter" class="form-label">Cover Letter</label>
+                        {{ application_form.cover_letter }}
+                        <div class="invalid-feedback">Please provide a cover letter.</div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-secondary-custom py-2 px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary-custom py-2 px-4" id="btn-submit-application">Submit Application</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

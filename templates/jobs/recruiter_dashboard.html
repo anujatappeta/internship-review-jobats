@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Recruiter Dashboard | JobSphere ATS{% endblock %}
+
+{% block content %}
+<!-- Hidden csrf token for AJAX status transitions -->
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+<!-- Recruiter Stats Summary Header -->
+<div class="dashboard-header-container">
+    <div class="container">
+        <div class="row align-items-center mb-4">
+            <div class="col-md-7">
+                <h1 class="h2 font-weight-bold mb-1">ATS Recruitment Pipeline</h1>
+                <p class="text-secondary-custom mb-0">Track and manage candidates through hiring stages in real-time.</p>
+            </div>
+            
+            <div class="col-md-5 mt-3 mt-md-0">
+                <!-- Filter Form by Job Posting -->
+                <form method="get" action="" class="row g-2 align-items-center justify-content-md-end">
+                    <div class="col-auto">
+                        <label for="job_filter" class="form-label mb-0 text-muted small">Filter by Position:</label>
+                    </div>
+                    <div class="col-md-7">
+                        <select name="job_filter" id="job_filter" class="form-select" onchange="this.form.submit()">
+                            <option value="">All Open Positions</option>
+                            {% for job in job_postings %}
+                                <option value="{{ job.id }}" {% if selected_job_id == job.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ job.title }} ({{ job.company.name }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Metrics Cards -->
+        <div class="row g-3">
+            <div class="col-6 col-md-3 col-lg">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-folder-tree"></i></div>
+                    <div>
+                        <h4 class="stat-number" id="stat-total-apps">{{ total_apps }}</h4>
+                        <p class="stat-label">Total Applications</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 col-lg">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-inbox"></i></div>
+                    <div>
+                        <h4 class="stat-number" id="stat-applied">{{ applied_count }}</h4>
+                        <p class="stat-label">Applied</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 col-lg">
+                <div class="stat-card">
+                    <div class="stat-icon warning"><i class="fa-solid fa-hourglass-half"></i></div>
+                    <div>
+                        <h4 class="stat-number" id="stat-review">{{ review_count }}</h4>
+                        <p class="stat-label">Under Review</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 col-lg">
+                <div class="stat-card">
+                    <div class="stat-icon success"><i class="fa-solid fa-circle-check"></i></div>
+                    <div>
+                        <h4 class="stat-number" id="stat-shortlist">{{ shortlist_count }}</h4>
+                        <p class="stat-label">Shortlisted</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 col-lg">
+                <div class="stat-card">
+                    <div class="stat-icon danger"><i class="fa-solid fa-circle-xmark"></i></div>
+                    <div>
+                        <h4 class="stat-number" id="stat-rejected">{{ rejected_count }}</h4>
+                        <p class="stat-label">Not Selected</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Kanban Pipeline Columns -->
+<div class="container pb-5">
+    <div class="kanban-board">
+        <!-- 1. APPLIED Column -->
+        <div class="kanban-col" data-stage="APPLIED">
+            <div class="kanban-col-header">
+                <h3 class="kanban-title">
+                    <i class="fa-solid fa-inbox text-primary small"></i> Applied
+                </h3>
+                <span class="kanban-badge">{{ stages.APPLIED|length }}</span>
+            </div>
+            <div class="kanban-cards">
+                {% for app in stages.APPLIED %}
+                    {% include 'jobs/includes/kanban_card.html' with app=app stage='APPLIED' %}
+                {% empty %}
+                    <div class="kanban-empty">
+                        <i class="fa-regular fa-folder-open mb-2"></i>
+                        <span>No candidates here</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 2. UNDER REVIEW Column -->
+        <div class="kanban-col" data-stage="REVIEW">
+            <div class="kanban-col-header">
+                <h3 class="kanban-title">
+                    <i class="fa-solid fa-glasses text-warning small"></i> Under Review
+                </h3>
+                <span class="kanban-badge">{{ stages.REVIEW|length }}</span>
+            </div>
+            <div class="kanban-cards">
+                {% for app in stages.REVIEW %}
+                    {% include 'jobs/includes/kanban_card.html' with app=app stage='REVIEW' %}
+                {% empty %}
+                    <div class="kanban-empty">
+                        <i class="fa-regular fa-folder-open mb-2"></i>
+                        <span>No candidates here</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 3. SHORTLISTED Column -->
+        <div class="kanban-col" data-stage="SHORTLIST">
+            <div class="kanban-col-header">
+                <h3 class="kanban-title">
+                    <i class="fa-solid fa-calendar-check text-success small"></i> Shortlisted
+                </h3>
+                <span class="kanban-badge">{{ stages.SHORTLIST|length }}</span>
+            </div>
+            <div class="kanban-cards">
+                {% for app in stages.SHORTLIST %}
+                    {% include 'jobs/includes/kanban_card.html' with app=app stage='SHORTLIST' %}
+                {% empty %}
+                    <div class="kanban-empty">
+                        <i class="fa-regular fa-folder-open mb-2"></i>
+                        <span>No candidates here</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 4. REJECTED Column -->
+        <div class="kanban-col" data-stage="REJECTED">
+            <div class="kanban-col-header">
+                <h3 class="kanban-title">
+                    <i class="fa-solid fa-circle-xmark text-danger small"></i> Rejected
+                </h3>
+                <span class="kanban-badge">{{ stages.REJECTED|length }}</span>
+            </div>
+            <div class="kanban-cards">
+                {% for app in stages.REJECTED %}
+                    {% include 'jobs/includes/kanban_card.html' with app=app stage='REJECTED' %}
+                {% empty %}
+                    <div class="kanban-empty">
+                        <i class="fa-regular fa-folder-open mb-2"></i>
+                        <span>No candidates here</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
